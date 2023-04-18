@@ -1770,7 +1770,7 @@ struct shadowcache : hashtable<shadowcachekey, shadowcacheval>
     }
 };
 
-extern int smcache, smfilter, smgather, smalpha, smalphaprec, alphashadow;
+extern int smcache, smfilter, smdither, smgather, smalpha, smalphaprec, alphashadow;
 
 #define SHADOWCACHE_EVICT 2
 
@@ -1961,6 +1961,7 @@ VAR(0, smquery, 0, 1, 1);
 VARF(0, smcullside, 0, 1, 1, cleanupshadowatlas());
 VARF(0, smcache, 0, 1, 2, cleanupshadowatlas());
 VARF(IDF_PERSIST, smfilter, 0, 2, 3, { cleardeferredlightshaders(); cleanupshadowatlas(); cleanupvolumetric(); });
+VARF(IDF_PERSIST, smdither, 0, 1, 1, { cleardeferredlightshaders(); cleanupshadowatlas(); cleanupvolumetric(); });
 VARF(IDF_PERSIST, smgather, 0, 0, 1, { cleardeferredlightshaders(); cleanupshadowatlas(); cleanupvolumetric(); });
 VAR(0, smnoshadow, 0, 0, 1);
 VAR(0, smdynshadow, 0, 1, 1);
