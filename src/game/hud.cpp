@@ -169,7 +169,7 @@ namespace hud
     VAR(IDF_PERSIST, crosshairhitspeed, 0, 500, VAR_MAX);
     FVAR(IDF_PERSIST, crosshairblend, 0, 1, 1);
     FVAR(IDF_PERSIST, crosshairaccamt, 0, 0, 1);
-    VAR(IDF_PERSIST, crosshairflash, 0, 1, 1);
+    VAR(IDF_PERSIST, crosshairhealth, 0, 0b00, 0b11);
     FVAR(IDF_PERSIST, crosshairthrob, 0, 0, 1000);
     TVAR(IDF_PERSIST|IDF_PRELOAD, cursortex, "textures/hud/cursor", 3);
     TVAR(IDF_PERSIST|IDF_PRELOAD, cursorhovertex, "textures/hud/cursorhover", 3);
@@ -1174,37 +1174,54 @@ namespace hud
             else if(crosshairweapons&2) c = vec::fromcolor(W(game::focus->weapselect, colour));
             else if(crosshairtone) skewcolour(c.r, c.g, c.b, crosshairtone);
             int heal = game::focus->gethealth(game::gamemode, game::mutators);
-            if(crosshairflash && game::focus->state == CS_ALIVE)
+            if ((crosshairhealth & 0b11) != 0 && game::focus->state == CS_ALIVE)
             {
-                const float ratio = clamp(float(game::focus->health)/float(heal), 0.0f, 2.0f);
-
-                if(ratio < 0.2f)
+                const float ratio = clamp(float(game::focus->health) / float(heal), 0.0f, 2.0f);
+                float red, green, blue;  // Added semicolon to end the line
+            
+                if (ratio < 0.25f)
                 {
                     // Red (critical health level)
-                    c.r = 1.0f;
-                    c.g = 0.0f;
-                    c.b = 0.0f;
+                    red = 1.0f;
+                    green = 0.0f;
+                    blue = 0.0f;
                 }
-                else if(ratio < 0.6f)
+                else if (ratio < 0.6f)
                 {
                     // Red-yellow
-                    c.r = 1.0f;
-                    c.g = (ratio-0.2f)/0.4f;
-                    c.b = 0.0f;
+                    red = 1.0f;
+                    green = (ratio - 0.25f) / 0.35f;
+                    blue = 0.0f;
                 }
-                else if(ratio < 1.0f)
+                else if (ratio < 1.0f)
                 {
-                    // Yellow-white
-                    c.r = 1.0f;
-                    c.g = 1.0f;
-                    c.b = (ratio-0.6f)/0.4f;
+                    // Yellow-green
+                    red = 1.0f - ((ratio - 0.6f) / 0.4f);
+                    green = 1.0f;
+                    blue = 0.0f;
                 }
                 else
                 {
-                    // Green (overheal)
-                    c.r = 2.0f - ratio;
-                    c.g = 1.0f;
-                    c.b = 2.0f - ratio;
+                    // Blue (overheal)
+                    red = 0.0f;
+                    green = 1.0f;
+                    blue = 2.0f - ratio;
+                }
+            
+                // Flash
+                if ((crosshairhealth & 0b10) != 0)  // Check second bit
+                {
+                    int millis = lastmillis % 1000;
+                    float amt = (millis <= 500 ? millis / 500.0f : 1.0f - ((millis - 500) / 500.0f)) * clamp(float(heal - game::focus->health) / float(heal), 0.0f, 1.0f);
+                    flashcolour(c.r, c.g, c.b, red, green, blue, amt);
+                }
+            
+                // Solid
+                if ((crosshairhealth & 0b01) != 0)  // Check first bit
+                {
+                    c.r = red;
+                    c.g = green;
+                    c.b = blue;
                 }
             }
             if(crosshairthrob > 0 && regentime && game::focus->lastregen && lastmillis-game::focus->lastregen <= regentime)
